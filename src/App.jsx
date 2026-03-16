@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { puter } from '@heyputer/puter.js';
+puter.appID = 'meu-chatbot-pessoal';
 
 const MODELS = [
   { group: 'OpenAI',    value: 'gpt-4o',                       label: 'GPT-4o' },
@@ -135,7 +136,8 @@ export default function App() {
   const [loading,       setLoading]       = useState(false);
   const [webOn,         setWebOn]         = useState(false);
   const [model,         setModel]         = useState(MODELS[0].value);
-  const [sidebar,       setSidebar]       = useState(true);
+  const isMobile = window.innerWidth < 768;
+  const [sidebar,       setSidebar]       = useState(!isMobile);
   const [tab,           setTab]           = useState('chats');
   const bottomRef   = useRef(null);
   const inputRef    = useRef(null);
@@ -188,6 +190,7 @@ export default function App() {
     setActiveId(conv.id);
     setModel(conv.model || MODELS[0].value);
     setMessages(await loadMsgs(conv.id));
+    if (isMobile) setSidebar(false);
   }
 
   async function newConv() {
@@ -198,6 +201,7 @@ export default function App() {
     setActiveId(c.id);
     setMessages([]);
     setTab('chats');
+    if (isMobile) setSidebar(false);
   }
 
   async function delConv(id, e) {
@@ -324,8 +328,13 @@ export default function App() {
       {showTavily && <TavilyModal onSave={saveTavily} />}
       {showInstructions && <InstructionsModal value={instructions} onSave={saveInstructions} onClose={() => setShowInstructions(false)} />}
 
+      {/* Sidebar overlay backdrop (mobile) */}
+      {sidebar && isMobile && (
+        <div onClick={() => setSidebar(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 40 }} />
+      )}
+
       {/* Sidebar */}
-      <div style={{ width: sidebar ? 260 : 0, minWidth: sidebar ? 260 : 0, overflow: 'hidden', transition: 'all 0.2s ease', background: '#171717', display: 'flex', flexDirection: 'column', borderRight: '1px solid #2a2a2a' }}>
+      <div style={{ position: isMobile ? 'fixed' : 'relative', top: 0, left: 0, height: '100vh', width: 260, zIndex: 50, transform: sidebar ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 0.25s ease', background: '#171717', display: 'flex', flexDirection: 'column', borderRight: '1px solid #2a2a2a' }}>
 
         {/* new chat */}
         <div style={{ padding: '12px 10px 8px', display: 'flex', gap: 6 }}>
@@ -479,7 +488,7 @@ export default function App() {
         </div>
 
         {/* input */}
-        <div style={{ padding: '12px 24px 20px', maxWidth: 760, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+        <div style={{ padding: isMobile ? '10px 12px 16px' : '12px 24px 20px', maxWidth: 760, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
           <div style={{ background: '#2f2f2f', borderRadius: 16, border: '1px solid #3d3d3d', padding: '12px 16px', display: 'flex', gap: 10, alignItems: 'flex-end' }}>
             <textarea
               ref={el => { textareaRef.current = el; inputRef.current = el; }}
